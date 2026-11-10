@@ -8,9 +8,10 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --text-color: var(--tg-theme-text-color, #000000);
-            --button-color: var(--tg-theme-button-color, #2481cc);
+            --bg-color: var(--tg-theme-bg-color, #f4f4f5);
+            --text-color: var(--tg-theme-text-color, #18181b);
+            --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+            --button-color: var(--tg-theme-button-color, #2563eb);
             --button-text-color: var(--tg-theme-button-text-color, #ffffff);
         }
         body {
@@ -18,88 +19,157 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1 { margin-bottom: 5px; }
-        .card {
-            background: rgba(128, 128, 128, 0.1);
-            border-radius: 12px;
-            padding: 15px;
+        .container {
             width: 100%;
-            max-width: 400px;
-            margin-top: 15px;
-            box-sizing: border-box;
-            word-break: break-all;
+            max-width: 480px;
         }
+        h1 { font-size: 24px; margin-bottom: 4px; text-align: center; }
+        .subtitle { text-align: center; color: #71717a; margin-bottom: 20px; font-size: 14px; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .pillar-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(128,128,128,0.1);
+            font-size: 15px;
+        }
+        .pillar-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         button {
             background-color: var(--button-color);
             color: var(--button-text-color);
             border: none;
             border-radius: 8px;
-            padding: 12px 20px;
-            font-size: 16px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
-            max-width: 400px;
-            margin-top: 15px;
         }
         button:active { opacity: 0.8; }
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        pre { font-size: 12px; white-space: pre-wrap; word-break: break-all; margin: 0; }
     </style>
 </head>
 <body>
 
-    <h1>Life OS 🎮</h1>
-    <p>Ваша операционная система жизни</p>
+    <div class="container">
+        <h1>Life OS 🎮</h1>
+        <div class="subtitle" id="user-welcome">Загрузка профиля...</div>
 
-    <div class="card" id="user-card">
-        <strong>Профиль Telegram:</strong><br>
-        <span id="user-info">Загрузка...</span>
-    </div>
+        <!-- Карточка прогресса по 5 столпам -->
+        <div class="card">
+            <strong>📊 Прогресс по столпам</strong><br><br>
+            <div class="pillar-item">
+                <span>🧠 Разум</span>
+                <span id="stat-mind">Ур. 1 (0 XP)</span>
+            </div>
+            <div class="pillar-item">
+                <span>💪 Тело</span>
+                <span id="stat-body">Ур. 1 (0 XP)</span>
+            </div>
+            <div class="pillar-item">
+                <span>🧘 Психика</span>
+                <span id="stat-inner_state">Ур. 1 (0 XP)</span>
+            </div>
+            <div class="pillar-item">
+                <span>💰 Финансы</span>
+                <span id="stat-finance">Ур. 1 (0 XP)</span>
+            </div>
+            <div class="pillar-item">
+                <span>🤝 Социум</span>
+                <span id="stat-connections">Ур. 1 (0 XP)</span>
+            </div>
+        </div>
 
-    <button onclick="testBackendConnection()">Проверить связь с Бэкендом</button>
+        <!-- Блок задач -->
+        <div class="card">
+            <strong>⚡ Выполнить задачу (+50 XP)</strong>
+            <div class="action-grid">
+                <button onclick="completeTask('mind', 50)">🧠 Чтение</button>
+                <button onclick="completeTask('body', 50)">💪 Тренировка</button>
+                <button onclick="completeTask('inner_state', 50)">🧘 Медитация</button>
+                <button onclick="completeTask('finance', 50)">💰 Учет финансов</button>
+            </div>
+            <div style="margin-top: 8px;">
+                <button onclick="completeTask('connections', 50)">🤝 Встреча с другом</button>
+            </div>
+        </div>
 
-    <div class="card" id="result-card" style="display:none;">
-        <strong>Ответ сервера:</strong><br>
-        <pre id="backend-response">Ожидание запроса...</pre>
+        <!-- Лог ответа сервера -->
+        <div class="card" id="result-card" style="display:none;">
+            <strong>Ответ сервера:</strong><br><br>
+            <pre id="backend-response">Ожидание...</pre>
+        </div>
     </div>
 
     <script>
-        // Инициализация Telegram WebApp SDK
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем приложение на весь экран
+        tg.expand();
 
-        // Получаем данные пользователя из Telegram
         const user = tg.initDataUnsafe?.user;
-        const userInfoEl = document.getElementById('user-info');
+        
+        // Если открыто в обычном браузере для тестов, используем тестовый ID
+        const telegramId = user ? user.id : 12345678;
+        const username = user ? (user.username || user.first_name) : "TestUser";
 
-        if (user) {
-            userInfoEl.innerHTML = `Имя: ${user.first_name} ${user.last_name || ''}<br>Username: @${user.username || 'отсутствует'}<br>ID: ${user.id}`;
-        } else {
-            userInfoEl.innerHTML = "Запущено вне Telegram (в обычном браузере)";
-        }
+        document.getElementById('user-welcome').innerText = user 
+            ? `Привет, ${user.first_name}! Добро пожаловать в Life OS.` 
+            : `Режим браузера (ID: ${telegramId})`;
 
-        // ВАЖНО: Замените этот URL на вашу реальную ссылку с Render
-        const API_URL = "https://life-os-backend-mthw.onrender.com";
+        // ВАЖНО: адрес вашего бэкенда на Render
+        const API_URL = "https://life-os-backend.onrender.com";
 
-        async function testBackendConnection() {
+        async function completeTask(pillarName, xpGained) {
             const resultCard = document.getElementById('result-card');
             const responseEl = document.getElementById('backend-response');
             
             resultCard.style.display = 'block';
-            responseEl.innerText = "Подключаемся к серверу на Render...";
+            responseEl.innerText = `Отправка запроса (+${xpGained} XP в столп "${pillarName}")...`;
 
             try {
-                // Делаем запрос к эндпоинту /test-db, который мы создали в main.py
-                const res = await fetch(`${API_URL}/test-db`);
+                const res = await fetch(`${API_URL}/complete-activity`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telegram_id: telegramId,
+                        username: username,
+                        pillar_name: pillarName,
+                        xp_gained: xpGained
+                    })
+                });
+
                 const data = await res.json();
-                
-                // Выводим результат в красивом виде
                 responseEl.innerText = JSON.stringify(data, null, 2);
+
+                // Если сервер ответил успехом, мгновенно обновляем интерфейс уровня/опыта
+                if (data.status === "success") {
+                    const statEl = document.getElementById(`stat-${data.pillar}`);
+                    if (statEl) {
+                        statEl.innerText = `Ур. ${data.level} (${data.xp} XP)`;
+                    }
+                }
             } catch (error) {
-                responseEl.innerText = "Ошибка запроса: " + error.message + "\n\n(Убедитесь, что бэкенд на Render проснулся, так как бесплатный тариф засыпает при бездействии).";
+                responseEl.innerText = "Ошибка сети: " + error.message;
             }
         }
     </script>
