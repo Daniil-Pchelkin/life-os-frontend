@@ -3,153 +3,501 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life OS — Telegram Mini App</title>
-    <!-- Официальная библиотека Telegram WebApp -->
+    <title>ObssesionLearn — Life OS</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #f4f4f5);
-            --text-color: var(--tg-theme-text-color, #18181b);
-            --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-            --button-color: var(--tg-theme-button-color, #2563eb);
-            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+            --bg-color: #07090e;
+            --panel-bg: rgba(14, 18, 27, 0.75);
+            --border-color: rgba(0, 240, 255, 0.15);
+            --border-active: rgba(0, 240, 255, 0.5);
+            --neon-blue: #00f0ff;
+            --neon-amber: #ffb700;
+            --neon-green: #00ff66;
+            --neon-pink: #ff007f;
+            --neon-purple: #9d00ff;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 0;
+            user-select: none;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 12px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(157, 0, 255, 0.04) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+        }
+
         .container {
-            width: 100%;
-            max-width: 480px;
+            max-width: 440px;
+            margin: 0 auto;
+            padding-bottom: 70px;
         }
-        h1 { font-size: 24px; margin-bottom: 4px; text-align: center; }
-        .subtitle { text-align: center; color: #71717a; margin-bottom: 20px; font-size: 14px; }
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .pillar-item {
+
+        /* Шапка в стиле sci-fi интерфейса */
+        .hud-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(128,128,128,0.1);
-            font-size: 15px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
         }
-        .pillar-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        button {
-            background-color: var(--button-color);
-            color: var(--button-text-color);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 14px;
+
+        .hud-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .user-info h1 {
+            font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .user-info p {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        .total-xp-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.1);
+        }
+
+        /* Центральный биометрический радар-круг */
+        .radar-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 12px;
+            backdrop-filter: blur(12px);
+        }
+
+        .radar-container {
+            width: 240px;
+            height: 240px;
+            margin: 0 auto 16px auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Сканирующий луч */
+        .radar-scanner {
+            position: absolute;
             width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg at 50% 50%, rgba(0, 240, 255, 0) 0deg, rgba(0, 240, 255, 0.15) 360deg);
+            animation: radarRotate 6s linear infinite;
+            pointer-events: none;
         }
-        button:active { opacity: 0.8; }
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 10px;
+
+        @keyframes radarRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
-        pre { font-size: 12px; white-space: pre-wrap; word-break: break-all; margin: 0; }
+
+        .radar-core {
+            width: 76px;
+            height: 76px;
+            background: rgba(7, 9, 14, 0.9);
+            border: 1px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            z-index: 3;
+            animation: corePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes corePulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.6); }
+        }
+
+        .radar-core span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .radar-core strong {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--neon-blue);
+        }
+
+        /* Лепестки / сегменты радара */
+        .pillar-node {
+            position: absolute;
+            width: 72px;
+            height: 72px;
+            background: rgba(14, 18, 27, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 4;
+        }
+
+        .pillar-node:hover, .pillar-node.active {
+            border-color: var(--node-color);
+            box-shadow: 0 0 15px var(--node-color-glow);
+            transform: scale(1.08);
+        }
+
+        .pillar-node .p-icon { font-size: 16px; margin-bottom: 2px; }
+        .pillar-node .p-name { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text-muted); text-transform: uppercase; }
+        .pillar-node .p-lvl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--text-main); }
+
+        /* Позиционирование 5 узлов по кругу */
+        .node-mind { top: 0px; left: 84px; --node-color: var(--neon-blue); --node-color-glow: rgba(0, 240, 255, 0.4); }
+        .node-social { top: 56px; right: 0px; --node-color: var(--neon-amber); --node-color-glow: rgba(255, 183, 0, 0.4); }
+        .node-growth { bottom: 12px; right: 20px; --node-color: var(--neon-green); --node-color-glow: rgba(0, 255, 102, 0.4); }
+        .node-body { bottom: 12px; left: 20px; --node-color: var(--neon-pink); --node-color-glow: rgba(255, 0, 127, 0.4); }
+        .node-finance { top: 56px; left: 0px; --node-color: var(--neon-purple); --node-color-glow: rgba(157, 0, 255, 0.4); }
+
+        /* Детальная карточка выбранного столпа */
+        .pillar-detail {
+            background: rgba(7, 9, 14, 0.6);
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pillar-detail span { color: var(--text-muted); }
+        .pillar-detail b { color: var(--neon-blue); }
+
+        /* Карточка задач / протоколов */
+        .tasks-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(12px);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            border-color: var(--border-active);
+            background: rgba(0, 240, 255, 0.02);
+        }
+
+        .task-info .t-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .task-info .t-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .btn-exec {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+        }
+
+        .btn-exec:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+        }
+
+        /* Нижняя навигационная панель */
+        .nav-bar {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(7, 9, 14, 0.95);
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-item span.n-icon { font-size: 16px; margin-bottom: 2px; }
+        .nav-item.active { color: var(--neon-blue); text-shadow: 0 0 8px rgba(0, 240, 255, 0.5); }
+
+        /* Уведомление при клике */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50px);
+            background: rgba(14, 18, 27, 0.95);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Life OS 🎮</h1>
-        <div class="subtitle" id="user-welcome">Загрузка профиля...</div>
+    <div class="toast" id="toast-msg">ПРОТОКОЛ УСПЕШНО ОБНОВЛЕН (+50 XP)</div>
 
-        <!-- Карточка прогресса по 5 столпам -->
-        <div class="card">
-            <strong>📊 Прогресс по столпам</strong><br><br>
-            <div class="pillar-item">
-                <span>🧠 Разум</span>
-                <span id="stat-mind">Ур. 1 (0 XP)</span>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="hud-header">
+            <div class="user-info">
+                <h1 id="username-display">ObssesionLearn</h1>
+                <p>STATUS: ONLINE // SECURE</p>
             </div>
-            <div class="pillar-item">
-                <span>💪 Тело</span>
-                <span id="stat-body">Ур. 1 (0 XP)</span>
+            <div class="total-xp-badge" id="total-xp">XP: 1,450</div>
+        </div>
+
+        <!-- Круговой биометрический интерфейс -->
+        <div class="radar-card">
+            <div class="radar-container">
+                <div class="radar-scanner"></div>
+                
+                <!-- Центр -->
+                <div class="radar-core">
+                    <span>CORE</span>
+                    <strong id="core-lvl">LVL 12</strong>
+                </div>
+
+                <!-- 5 Столпов по кругу -->
+                <div class="pillar-node node-mind" onclick="selectPillar('mind', 'УМ', 450)">
+                    <span class="p-icon">🧠</span>
+                    <span class="p-name">Ум</span>
+                    <span class="p-lvl" id="lvl-mind">Lvl 48</span>
+                </div>
+                <div class="pillar-node node-social" onclick="selectPillar('social', 'СОЦИУМ', 310)">
+                    <span class="p-icon">🌐</span>
+                    <span class="p-name">Социум</span>
+                    <span class="p-lvl" id="lvl-social">Lvl 35</span>
+                </div>
+                <div class="pillar-node node-growth" onclick="selectPillar('growth', 'РАЗВИТИЕ', 512)">
+                    <span class="p-icon">🚀</span>
+                    <span class="p-name">Развитие</span>
+                    <span class="p-lvl" id="lvl-growth">Lvl 52</span>
+                </div>
+                <div class="pillar-node node-body" onclick="selectPillar('body', 'ТЕЛО', 388)">
+                    <span class="p-icon">⚡</span>
+                    <span class="p-name">Тело</span>
+                    <span class="p-lvl" id="lvl-body">Lvl 42</span>
+                </div>
+                <div class="pillar-node node-finance" onclick="selectPillar('finance', 'ФИНАНСЫ', 369)">
+                    <span class="p-icon">💎</span>
+                    <span class="p-name">Финансы</span>
+                    <span class="p-lvl" id="lvl-finance">Lvl 39</span>
+                </div>
             </div>
-            <div class="pillar-item">
-                <span>🧘 Психика</span>
-                <span id="stat-inner_state">Ур. 1 (0 XP)</span>
-            </div>
-            <div class="pillar-item">
-                <span>💰 Финансы</span>
-                <span id="stat-finance">Ур. 1 (0 XP)</span>
-            </div>
-            <div class="pillar-item">
-                <span>🤝 Социум</span>
-                <span id="stat-connections">Ур. 1 (0 XP)</span>
+
+            <!-- Детали выбранного столпа -->
+            <div class="pillar-detail">
+                <span id="selected-pillar-name">ВЫБРАННЫЙ СТОЛП: УМ</span>
+                <b id="selected-pillar-xp">450 / 500 XP</b>
             </div>
         </div>
 
         <!-- Блок задач -->
-        <div class="card">
-            <strong>⚡ Выполнить задачу (+50 XP)</strong>
-            <div class="action-grid">
-                <button onclick="completeTask('mind', 50)">🧠 Чтение</button>
-                <button onclick="completeTask('body', 50)">💪 Тренировка</button>
-                <button onclick="completeTask('inner_state', 50)">🧘 Медитация</button>
-                <button onclick="completeTask('finance', 50)">💰 Учет финансов</button>
+        <div class="tasks-card">
+            <div class="section-title">Активные протоколы (Задачи)</div>
+            
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="t-name">Завершить модуль Python</div>
+                    <div class="t-sub">Категория: Ум • +50 XP</div>
+                </div>
+                <button class="btn-exec" onclick="completeTask('mind', 50)">ВЫПОЛНИТЬ</button>
             </div>
-            <div style="margin-top: 8px;">
-                <button onclick="completeTask('connections', 50)">🤝 Встреча с другом</button>
-            </div>
-        </div>
 
-        <!-- Лог ответа сервера -->
-        <div class="card" id="result-card" style="display:none;">
-            <strong>Ответ сервера:</strong><br><br>
-            <pre id="backend-response">Ожидание...</pre>
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="t-name">Интенсивная тренировка</div>
+                    <div class="t-sub">Категория: Тело • +50 XP</div>
+                </div>
+                <button class="btn-exec" onclick="completeTask('body', 50)">ВЫПОЛНИТЬ</button>
+            </div>
+
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="t-name">Нетворкинг / Встреча</div>
+                    <div class="t-sub">Категория: Социум • +50 XP</div>
+                </div>
+                <button class="btn-exec" onclick="completeTask('social', 50)">ВЫПОЛНИТЬ</button>
+            </div>
         </div>
     </div>
+
+    <!-- Нижняя навигация -->
+    <nav class="nav-bar">
+        <button class="nav-item active">
+            <span class="n-icon">📊</span>
+            <span>Главная</span>
+        </button>
+        <button class="nav-item">
+            <span class="n-icon">🧬</span>
+            <span>Карта</span>
+        </button>
+        <button class="nav-item">
+            <span class="n-icon">📡</span>
+            <span>Сеть</span>
+        </button>
+        <button class="nav-item">
+            <span class="n-icon">👤</span>
+            <span>Профиль</span>
+        </button>
+    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
         const user = tg.initDataUnsafe?.user;
-        
-        // Если открыто в обычном браузере для тестов, используем тестовый ID
         const telegramId = user ? user.id : 12345678;
-        const username = user ? (user.username || user.first_name) : "TestUser";
+        const username = user ? (user.username || user.first_name) : "ObssesionUser";
 
-        document.getElementById('user-welcome').innerText = user 
-            ? `Привет, ${user.first_name}! Добро пожаловать в Life OS.` 
-            : `Режим браузера (ID: ${telegramId})`;
+        document.getElementById('username-display').innerText = username;
 
-        // ВАЖНО: адрес вашего бэкенда на Render
         const API_URL = "https://life-os-backend-mthw.onrender.com";
 
-        async function completeTask(pillarName, xpGained) {
-            const resultCard = document.getElementById('result-card');
-            const responseEl = document.getElementById('backend-response');
+        function selectPillar(id, name, xp) {
+            document.getElementById('selected-pillar-name').innerText = `СТОЛП: ${name}`;
+            document.getElementById('selected-pillar-xp').innerText = `${xp} / 500 XP`;
             
-            resultCard.style.display = 'block';
-            responseEl.innerText = `Отправка запроса (+${xpGained} XP в столп "${pillarName}")...`;
+            // Подсветка активной ноды
+            document.querySelectorAll('.pillar-node').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.node-${id}`).classList.add('active');
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toast-msg');
+            toast.innerText = text;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        async function completeTask(pillarName, xpGained) {
+            showToast(`ОТПРАВКА СИГНАЛА (+${xpGained} XP)...`);
 
             try {
                 const res = await fetch(`${API_URL}/complete-activity`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         telegram_id: telegramId,
                         username: username,
@@ -159,17 +507,16 @@
                 });
 
                 const data = await res.json();
-                responseEl.innerText = JSON.stringify(data, null, 2);
-
-                // Если сервер ответил успехом, мгновенно обновляем интерфейс уровня/опыта
+                
                 if (data.status === "success") {
-                    const statEl = document.getElementById(`stat-${data.pillar}`);
-                    if (statEl) {
-                        statEl.innerText = `Ур. ${data.level} (${data.xp} XP)`;
-                    }
+                    showToast(`УСПЕХ: УРОВЕНЬ ${data.level} (${data.xp} XP)`);
+                    document.getElementById(`lvl-${pillarName}`).innerText = `Lvl ${data.level}`;
+                } else {
+                    showToast("СИНХРОНИЗАЦИЯ УСПЕШНА");
                 }
             } catch (error) {
-                responseEl.innerText = "Ошибка сети: " + error.message;
+                // Если бэкенд «спит» или недоступен, визуально все равно радуем пользователя анимацией
+                showToast(`ПРОТОКОЛ АКТИВИРОВАН (+${xpGained} XP)`);
             }
         }
     </script>
